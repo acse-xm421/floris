@@ -31,6 +31,7 @@ _autosummary/
 examples/cp_ct_cq_lut.p
 examples/hist.hist
 examples/SLSQP.out
+examples/0*
 
 # Log files
 *.log
