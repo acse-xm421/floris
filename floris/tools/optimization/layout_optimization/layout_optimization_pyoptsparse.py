@@ -71,9 +71,10 @@ class LayoutOptimizationPyOptSparse(LayoutOptimization):
             self.optOptions = optOptions
         else:
             if self.solver == "SNOPT":
+                # print("Setting up optimization with default SNOPT options.")
                 self.optOptions = {"Major optimality tolerance": 1e-7}
             else:
-                self.optOptions = {}
+                self.optOptions = {"ACC": 1e-7}#, "maxiter": 1000, "disp": True
 
         exec("self.opt = pyoptsparse." + self.solver + "(options=self.optOptions)")
 
@@ -96,6 +97,7 @@ class LayoutOptimizationPyOptSparse(LayoutOptimization):
                     storeHistory=self.storeHistory,
                     hotStart=self.hotStart
                 )
+        # self.parse_sol_vars(self.sol)
         return self.sol
 
     def _obj_func(self, varDict):
@@ -130,6 +132,7 @@ class LayoutOptimizationPyOptSparse(LayoutOptimization):
     def parse_sol_vars(self, sol):
         self.x = list(self._unnorm(sol.getDVs()["x"], self.xmin, self.xmax))[0]
         self.y = list(self._unnorm(sol.getDVs()["y"], self.ymin, self.ymax))[1]
+        return self.x, self.y
 
     def add_var_group(self, optProb):
         optProb.addVarGroup(

@@ -106,7 +106,9 @@ class LayoutOptimizationScipy(LayoutOptimization):
             for valy in locs[self.nturbs : 2 * self.nturbs]
         ]
         self._change_coordinates(locs_unnorm)
-        return -1 * self.fi.get_farm_AEP(self.freq) / self.initial_AEP
+        objective_value = -1 * self.fi.get_farm_AEP(self.freq) / self.initial_AEP
+        # print("objective_value: ", objective_value)
+        return objective_value
 
     def _change_coordinates(self, locs):
         # Parse the layout coordinates
@@ -117,21 +119,25 @@ class LayoutOptimizationScipy(LayoutOptimization):
         self.fi.reinitialize(layout_x=layout_x, layout_y=layout_y)
 
     def _generate_constraints(self):
+        print("Generating constraints...")
         tmp1 = {
             "type": "ineq",
             "fun": lambda x, *args: self._space_constraint(x),
         }
-        tmp2 = {
-            "type": "ineq",
-            "fun": lambda x: self._distance_from_boundaries(x),
-        }
+        # tmp2 = {
+        #     "type": "ineq",
+        #     "fun": lambda x: self._distance_from_boundaries(x),
+        # }
+        # self.cons = [tmp1, tmp2]
 
-        self.cons = [tmp1, tmp2]
+        self.cons = [tmp1]
 
     def _set_opt_bounds(self):
         self.bnds = [(0.0, 1.0) for _ in range(2 * self.nturbs)]
 
     def _space_constraint(self, x_in, rho=500):
+        # print("space constraint")
+        # print("min_dist", self.min_dist)
         x = [
             self._unnorm(valx, self.xmin, self.xmax)
             for valx in x_in[0 : self.nturbs]
@@ -143,7 +149,9 @@ class LayoutOptimizationScipy(LayoutOptimization):
 
         # Calculate distances between turbines
         locs = np.vstack((x, y)).T
-        distances = cdist(locs, locs)
+        # print("locs: ", locs)
+        distances = cdist(locs, locs)#
+        # print("distances: ", distances)
         arange = np.arange(distances.shape[0])
         distances[arange, arange] = 1e10
         dist = np.min(distances, axis=0)
@@ -158,6 +166,7 @@ class LayoutOptimizationScipy(LayoutOptimization):
         summation = np.sum(exponents, axis=-1)[:, np.newaxis]
         KS_constraint = g_max + 1.0 / rho * np.log(summation)
 
+        # print("KS_constraint: ", KS_constraint)
         return -1*KS_constraint[0][0]
 
     def _distance_from_boundaries(self, x_in):

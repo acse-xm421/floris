@@ -1,0 +1,13 @@
+=====================================================
+Optimizing turbine layout...
+Number of parameters to optimize =  12
+=====================================================
+Optimization terminated successfully.
+         Current function value: -1.232974
+         Iterations: 22
+         Function evaluations: 325
+         Gradient evaluations: 25
+Optimization complete.
+... calcuating improvement in AEP
+Optimal layout: [[-70455.47753460745, 3459.057099451436, -118765.55763690772, -25763.52896276578, 80160.17511048919, 120654.39545382583], [-19368.409757421625, -47179.84704255866, 61073.99500923654, -37305.84838879085, -29056.00226082338, 55987.65113520706]]
+Optimal layout improves AEP by 23.3% from 72097.3 MWh to 88894.1 MWh

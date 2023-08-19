@@ -1,4 +1,5 @@
 import os
+import sys
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -28,6 +29,7 @@ are constrained to a square boundary and a random wind resource is supplied. The
 of the optimization show that the turbines are pushed to the outer corners of the boundary,
 which makes sense in order to maximize the energy production by minimizing wake interactions.
 """
+figpath = "examples/test_pic/solvers/"
 
 
 def load_floris():
@@ -41,8 +43,10 @@ def load_floris():
     D = 126.0 # rotor diameter for the NREL 5MW
     # layout_x = [0, 100, 200, ] # 3*D, 6 * D, 6 * D,
     # layout_y = [0, 0.0, 0.0, ] # 4 * D, 0, 4 * D,
-    layout_x = [0, 1000, 500.0, ] # 3*D, 6 * D, 6 * D,
-    layout_y = [0, 0.0, 1000.0, ] # 4 * D, 0, 4 * D,
+    layout_x = [0, 100, 50.0, 1000, 1100, 1050,] # 3*D, 6 * D, 6 * D,
+    layout_y = [0, 0.0, 1000.0, 0, 0.0, 1000.0,] # 4 * D, 0, 4 * D,
+    # layout_x = [0, 1000, 500.0, 1001, 2000, 1500,] # 3*D, 6 * D, 6 * D,
+    # layout_y = [0, 0.0, 1000.0, 0, 0.0, 1000.0, ] # 4 * D, 0, 4 * D,
     # layout_x = [0, 0.0, 1000.0, ] # 3*D, 6 * D, 6 * D,
     # layout_y = [0, 1000.0, 0, ] # 4 * D, 0, 4 * D, 
     # layout_x = [0, 0, 3 * D, 3 * D, 6 * D, 6 * D,] # 
@@ -54,15 +58,6 @@ def load_floris():
 
     # Now reinitialize FLORIS layout
     fi.reinitialize(layout_x = layout_x, layout_y = layout_y)
-
-    # # And visualize the floris layout
-    # fig, ax = plt.subplots()
-    # ax.plot(X[turbine_weights == 0], Y[turbine_weights == 0], 'ro', label="Neighboring farms")
-    # ax.plot(X[turbine_weights == 1], Y[turbine_weights == 1], 'go', label='Farm subset')
-    # ax.grid(True)
-    # ax.set_xlabel("x coordinate (m)")
-    # ax.set_ylabel("y coordinate (m)")
-    # ax.legend()
 
     return fi, turbine_weights
 
@@ -88,7 +83,7 @@ def load_windrose():
 
     return ws_windrose, wd_windrose, freq_windrose
 
-def plot_horizontal(fi, show_wd, save_name, yaw_angles):
+def plot_horizontal(fi, show_wd, solver, save_name, yaw_angles):
     # Create the plots of un-optimized layout
     horizontal_plane = fi.calculate_horizontal_plane(
         x_resolution=200,
@@ -102,10 +97,30 @@ def plot_horizontal(fi, show_wd, save_name, yaw_angles):
     )
     fig, ax_list = plt.subplots(1, 1, figsize=(10, 8))
     wakeviz.visualize_cut_plane(horizontal_plane, ax=ax_list, title="Horizontal")
-    name = "examples/test_pic/" + save_name + "_" + str(show_wd) + ".png"
+    name = figpath + solver + "_" + save_name + "_" + str(show_wd) + ".png"
     plt.savefig(name)
 
+
+class TerminalOutputToFile:
+    def __init__(self, filename):
+        self.terminal = sys.stdout
+        self.log_file = open(filename, "w")
+
+    def write(self, message):
+        self.terminal.write(message)
+        self.log_file.write(message)
+
+    def flush(self):
+        pass
+
+
 if __name__ == "__main__":
+
+    solver = "L-BFGS-B"
+    output_log_name = "examples/log/" + solver + "_terminal_output.txt"
+    # Redirect standard output to the file
+    sys.stdout = TerminalOutputToFile(output_log_name)
+    
     # Load FLORIS: full farm including neighboring wind farms
     fi, turbine_weights = load_floris()
     nturbs = len(fi.layout_x)
@@ -116,12 +131,10 @@ if __name__ == "__main__":
 
     wind_directions = np.arange(0, 360, 5.0)
     wind_speeds = [8.0]
+    freq = np.random.normal(0, 5, len(wind_directions))  # Generate 1000 data points
     freq = (
-        np.array(np.ones_like(wind_directions)/np.sum(np.ones_like(wind_directions)))
-        .reshape( ( len(wind_directions), len(wind_speeds) ) )
+        freq.reshape( ( len(wind_directions), len(wind_speeds) ) )
     )
-    # print(freq)
-    # freq = freq / freq.sum()
 
     # Create a FLORIS object for AEP calculations
     fi_WR = fi.copy()
@@ -130,17 +143,16 @@ if __name__ == "__main__":
     fi_WR.reinitialize(wind_speeds=wind_speeds, wind_directions=wind_directions)
 
     # The boundaries for the turbines, specified as vertices
-    boundaries = [(0.0, 0.0), (0.0, 1000.0), (1000.0, 1000.0), (1000.0, 0.0), (0.0, 0.0)]
+    boundaries = [(0.0, 0.0), (0.0, 1000.0), (2000.0, 1000.0), (2000.0, 0.0), (0.0, 0.0)]
     yaw_angles = np.array([[np.zeros(nturbs)]])
     show_wd = 0
 
 
 
-    plot_horizontal(fi_WR, show_wd, "before_opt", yaw_angles=yaw_angles)
-
+    plot_horizontal(fi_WR, show_wd, solver, "before_opt", yaw_angles=yaw_angles)
+    bnds = [(0,0.5),(0,0.5),(0,0.5),(0.5,1),(0.5,1),(0.5,1),(0,1),(0,1),(0,1),(0,1),(0,1),(0,1)]
     # Setup the optimization problem
-    layout_opt = LayoutOptimizationScipy(fi_WR, boundaries, min_dist=300.0)
-    # layout_opt = LayoutOptimizationPyOptSparse(fi_WR, boundaries=boundaries)#, min_dist=300.0
+    layout_opt = LayoutOptimizationScipy(fi_WR, boundaries, min_dist=200.0, bnds=bnds, solver=solver)
 
     # Run the optimization
     sol = layout_opt.optimize()
@@ -155,7 +167,7 @@ if __name__ == "__main__":
 
     # fi_WR.reinitialize(layout_x=sol_value_x, layout_y=sol_value_y)
 
-    plot_horizontal(fi_WR, show_wd, "after_opt", yaw_angles=yaw_angles)
+    plot_horizontal(fi_WR, show_wd, solver, "after_opt", yaw_angles=yaw_angles)
 
     fi_WR.calculate_wake()
     turbine_powers = fi_WR.get_turbine_powers()
@@ -173,5 +185,11 @@ if __name__ == "__main__":
         f'Optimal layout improves AEP by {percent_gain:.1f}% '
         f'from {base_aep:.1f} MWh to {opt_aep:.1f} MWh'
     )
-    layout_opt.plot_layout_opt_results()
-    plt.savefig("examples/test_pic/plot_stochastic.png")
+
+    sto_path = figpath + solver + "_plot_stochastic.png"
+    layout_opt.plot_layout_opt_results(sto_path)
+
+
+    # Reset standard output to the terminal
+sys.stdout.log_file.close()
+sys.stdout = sys.__stdout__

@@ -1,0 +1,8 @@
+=====================================================
+Optimizing turbine layout...
+Number of parameters to optimize =  12
+=====================================================
+Optimization complete.
+... calcuating improvement in AEP
+Optimal layout: [[0.0, 655.8265364115872, 0.0, 1312.3489769108173, 2000.0, 2000.0], [0.0, 0.0, 1000.0, 0.0, 0.0, 1000.0]]
+Optimal layout improves AEP by 17.1% from 72097.3 MWh to 84454.3 MWh

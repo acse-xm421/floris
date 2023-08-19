@@ -65,7 +65,7 @@ class LayoutOptimization(LoggerBase):
         sol = self._optimize()
         return sol
 
-    def plot_layout_opt_results(self):
+    def plot_layout_opt_results(self, path):
         x_initial, y_initial, x_opt, y_opt = self._get_initial_and_final_locs()
 
         plt.figure(figsize=(9, 6))
@@ -95,7 +95,9 @@ class LayoutOptimization(LoggerBase):
                     [verts[i][0], verts[i + 1][0]], [verts[i][1], verts[i + 1][1]], "b"
                 )
 
+        plt.savefig(path)
         plt.show()
+
 
     ###########################################################################
     # Properties
