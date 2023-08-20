@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
+from scipy.stats import weibull_min
 
 import floris.tools.visualization as wakeviz
 from floris.tools import FlorisInterface
@@ -28,7 +29,8 @@ are constrained to a square boundary and a random wind resource is supplied. The
 of the optimization show that the turbines are pushed to the outer corners of the boundary,
 which makes sense in order to maximize the energy production by minimizing wake interactions.
 """
-figpath = "examples/test_pic/test_exp/farms_test_"
+figpath = "examples/test_pic/test_exp/farms_"#angle_variance_wd/
+length = 2000.0
 
 def load_fixed_farm():
     # Load the default example floris object
@@ -38,11 +40,11 @@ def load_fixed_farm():
     # Specify the full wind farm layout: nominal wind farms
     # Set turbine locations to 6 turbines in a rectangle
     D = 126.0 # rotor diameter for the NREL 5MW
-    length = 2000.0 # 4500.0
+    # length = 2000.0 # 4500.0
     
     # fixed farm
-    layout_x_fixed = np.linspace(0,2000,10) # 3*D, 6 * D, 6 * D,
-    layout_y_fixed = np.zeros(10) #[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # 4 * D, 0, 4 * D,
+    layout_x_fixed = np.linspace(distance,distance+length,10) # 3*D, 6 * D, 6 * D,
+    layout_y_fixed = np.repeat(distance+0.5*length, 10) #[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # 4 * D, 0, 4 * D,
 
     # layout_x_fixed = [0, 667, 1334, 2000, 667, 1334, 0, 667, 1334, 2000] # 3*D, 6 * D, 6 * D,
     # layout_y_fixed = [0.0, 0.0, 0.0, 0.0, 1000.0, 1000.0, 2000.0, 2000.0, 2000.0, 2000.0] # 4 * D, 0, 4 * D,
@@ -75,11 +77,11 @@ def load_flexible_farm():
     # Specify the full wind farm layout: nominal wind farms
     # Set turbine locations to 6 turbines in a rectangle
     D = 126.0 # rotor diameter for the NREL 5MW
-    length = 2000.0
+    # length = 2000.0
 
     # flexible farm
-    layout_x_flexible = np.linspace(0,length,10) # 3*D, 6 * D, 6 * D,
-    layout_y_flexible = np.random.randint(0, length+1, size=10) # 4 * D, 0, 4 * D,
+    layout_x_flexible = np.linspace(distance,distance+length,10) # 3*D, 6 * D, 6 * D,
+    layout_y_flexible = np.random.randint(distance, distance+length+1, size=10) # 4 * D, 0, 4 * D,
     # layout_x_flexible = np.linspace(0,2000,10) # 3*D, 6 * D, 6 * D,
     # layout_y_flexible = np.zeros(10) #[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # 4 * D, 0, 4 * D,
 
@@ -161,7 +163,7 @@ class TerminalOutputToFile:
     def flush(self):
         pass
 
-def run_farm(exp_t, mean_wd, variance_wd, distance, angle=90, mean_ws=8.0, variance_ws=0.0,  length=2000.0, solver = "SLSQP"):
+def run_farm(exp_t, mean_wd, variance_wd, distance, length, angle=90, mean_ws=8.0, variance_ws=0.0, solver = "SLSQP"):
     
     figname = str(exp_t) 
     solver = solver # "L-BFGS-B"#
@@ -177,11 +179,30 @@ def run_farm(exp_t, mean_wd, variance_wd, distance, angle=90, mean_ws=8.0, varia
     # variance_ws = variance_ws
     wind_speeds = [8.0]
 
+    # wind speed - weibull distribution
+    # # Parameters of the Weibull distribution
+    # c = 2.0  # Shape parameter
+    # loc = 0  # Location parameter
+    # scale = 1  # Scale parameter
+
+    # # Create a Weibull distribution object
+    # weibull_dist = weibull_min(c, loc=loc, scale=scale)
+
+    # # Generate random numbers from the Weibull distribution
+    # random_numbers = weibull_dist.rvs(size=1000)
+
+    # # Calculate the probability density function (PDF) of the Weibull distribution
+    # x = np.linspace(0, 5, 100)
+    # pdf = weibull_dist.pdf(x)
+
+
     mean_wd = mean_wd
     variance_wd = variance_wd
     if variance_wd == 0:
         variance_wd = 1e-5
     freq = norm.pdf(wind_directions, mean_wd, variance_wd)
+
+
     # print("mean_wd=", mean_wd, "variance_wd", variance_wd)
 
     # Set values smaller than a threshold to 0
@@ -199,7 +220,7 @@ def run_farm(exp_t, mean_wd, variance_wd, distance, angle=90, mean_ws=8.0, varia
 
     # The boundaries for the turbines, specified as vertices
     length = length
-    boundaries = [(0.0, 0.0), (0.0, length), (length, length), (length, 0.0), (0.0, 0.0)]
+    boundaries = [(distance, distance), (distance, distance+length), (distance+length, distance+length), (distance+length, distance), (distance, distance)]
 
     yaw_angles = np.array([[np.zeros(nturbs)]])
     show_wd = mean_wd
@@ -287,51 +308,54 @@ if __name__ == "__main__":
     output_log_name = "examples/log/terminal_output_exp_test1.txt"
     sys.stdout = TerminalOutputToFile(output_log_name) 
 
-    # angle_range = np.arange(0, 360, 45)
-
     # Create an empty DataFrame with specified column names
-    columns = ['distance', 'variance of wind direction', 'flexible farm base power', 'flexible farm opt power', \
+    columns = ['distance', 'angle', 'variance of wind direction', 'flexible farm base power', 'flexible farm opt power', \
                'flexible_percent_gain', 'fixed farm base power', 'fixed farm opt power', 'fixed_percent_gain', \
                'total farm base power', 'total farm opt power', 'total_percent_gain', 'overlap_flag', \
                 'optimal position']
     df = pd.DataFrame(columns=columns)
 
     # Define the range of parameters
-    length = 2000.0
-    distance_range = np.arange(length, length*2, 200)
-    variance_wd_range = np.linspace(15, 90, 6)#4
+    angle_range = [225,] # np.arange(0, 360, 30)
+    distance_range = [2100,]
+    # distance_range = np.arange(length, length*2, 200)
+    variance_wd_range = [60,] # np.linspace(0, 90, 7)#4
+    # mean_wd_range = [90,]#np.arange(0, 360, 30)
     i = 1
 
-    # Run the simulation for each parameter 
-    
+    # Run the simulation for each parameter  
     for variance_wd in variance_wd_range:
-        for distance in distance_range:
-            print("=====================================================")
-            
-            farm_power = run_farm(i, mean_wd=0, variance_wd=variance_wd, distance=distance)
-            flexible_base_aep, flexible_opt_aep, flexible_percent_gain, \
-                fixed_base_aep, fixed_opt_aep, fixed_percent_gain, \
-                    total_base_aep, total_opt_aep, total_percent_gain, \
-                        overlap_flag, sol = farm_power
-            
-            # Fill in the values one by one
-            df.loc[i, 'distance'] = distance
-            df.loc[i, 'variance of wind direction'] = variance_wd
+        for angle in angle_range:
+            for distance in distance_range:
+                print("=====================================================")
+                
+                farm_power = run_farm(i, mean_wd=0, variance_wd=variance_wd, \
+                                      distance=distance, angle=angle, length=length)
+                
+                flexible_base_aep, flexible_opt_aep, flexible_percent_gain, \
+                    fixed_base_aep, fixed_opt_aep, fixed_percent_gain, \
+                        total_base_aep, total_opt_aep, total_percent_gain, \
+                            overlap_flag, sol = farm_power
+                
+                # Fill in the values one by one
+                df.loc[i, 'distance'] = distance
+                df.loc[i, 'angle'] = angle
+                df.loc[i, 'variance of wind direction'] = variance_wd
 
-            df.loc[i, 'flexible farm base power'] = flexible_base_aep
-            df.loc[i, 'flexible farm opt power'] = flexible_opt_aep
-            df.loc[i, 'flexible_percent_gain'] = flexible_percent_gain
-            df.loc[i, 'fixed farm base power'] = fixed_base_aep
-            df.loc[i, 'fixed farm opt power'] = fixed_opt_aep
-            df.loc[i, 'fixed_percent_gain'] = fixed_percent_gain
-            df.loc[i, 'total farm base power'] = total_base_aep
-            df.loc[i, 'total farm opt power'] = total_opt_aep
-            df.loc[i, 'total_percent_gain'] = total_percent_gain
-            df.loc[i, "overlap_flag"] = overlap_flag
-            df.loc[i, "optimal position"] = [sol]
+                df.loc[i, 'flexible farm base power'] = flexible_base_aep
+                df.loc[i, 'flexible farm opt power'] = flexible_opt_aep
+                df.loc[i, 'flexible_percent_gain'] = flexible_percent_gain
+                df.loc[i, 'fixed farm base power'] = fixed_base_aep
+                df.loc[i, 'fixed farm opt power'] = fixed_opt_aep
+                df.loc[i, 'fixed_percent_gain'] = fixed_percent_gain
+                df.loc[i, 'total farm base power'] = total_base_aep
+                df.loc[i, 'total farm opt power'] = total_opt_aep
+                df.loc[i, 'total_percent_gain'] = total_percent_gain
+                df.loc[i, "overlap_flag"] = overlap_flag
+                df.loc[i, "optimal position"] = [sol]
 
-            i = i+1
-            print(df)
+                i = i+1
+                print(df)
 
     # Define the file path where you want to save the CSV file
     csv_file_path = 'exp1.csv'
