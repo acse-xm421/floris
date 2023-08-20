@@ -97,9 +97,6 @@ class LayoutOptimizationFarmsBase(LayoutOptimization):
         else:
             self.wind_speeds = wind_speeds
 
-        # print("wind_directions: ", self.wind_directions)
-        # print("wind_speeds: ", self.wind_speeds)
-
         # If freq is not provided, give equal weight to all wind conditions
         if freq is None:
             self.freq = np.ones((
@@ -107,10 +104,6 @@ class LayoutOptimizationFarmsBase(LayoutOptimization):
                 len(self.wind_speeds)
             ))
             self.freq = self.freq / self.freq.sum()
-            # self.freq = (
-            #     np.array(np.ones_like(wind_directions)/np.sum(np.ones_like(wind_directions)))
-            #     .reshape( ( len(wind_directions), len(wind_speeds) ) )
-            # )
         else:
             self.freq = freq
 

@@ -103,7 +103,7 @@ class LayoutOptimizationFarmsScipy(LayoutOptimizationFarmsBase, LayoutOptimizati
         if optOptions is not None:
             self.optOptions = optOptions
         else:
-            self.optOptions = {"maxiter": 100, "disp": True, "iprint": 2, "ftol": 1e-9, "eps":0.01}
+            self.optOptions = {"maxiter": 50, "disp": True, "iprint": 2, "ftol": 1e-9, "eps":0.01}
 
         # set max, min
         self.xmin = self.farms_xmin
@@ -128,15 +128,15 @@ class LayoutOptimizationFarmsScipy(LayoutOptimizationFarmsBase, LayoutOptimizati
                     self.bnds_y.append((self.norm_y[i], self.norm_y[i]))
             # flexible farm bounds
             else:
-                bnd_xmin = self.farm_xmin[idx]/self.farms_xmax
-                bnd_xmax = self.farm_xmax[idx]/self.farms_xmax
-                bnd_ymin = self.farm_ymin[idx]/self.farms_ymax
-                bnd_ymax = self.farm_ymax[idx]/self.farms_ymax
+                bnd_xmin = self._norm(self.farm_xmin[idx], self.farms_xmin, self.farms_xmax)
+                bnd_xmax = self._norm(self.farm_xmax[idx], self.farms_xmin, self.farms_xmax)
+                bnd_ymin = self._norm(self.farm_ymin[idx], self.farms_ymin, self.farms_ymax)
+                bnd_ymax = self._norm(self.farm_ymax[idx], self.farms_ymin, self.farms_ymax)
 
-                # print("bnd_xmin=", bnd_xmin)
-                # print("bnd_xmax=", bnd_xmax)
-                # print("bnd_ymin=", bnd_ymin)
-                # print("bnd_ymax=", bnd_ymax)
+                print("bnd_xmin=", bnd_xmin)
+                print("bnd_xmax=", bnd_xmax)
+                print("bnd_ymin=", bnd_ymin)
+                print("bnd_ymax=", bnd_ymax)
 
 
                 # set bnds for each turbine
@@ -144,19 +144,19 @@ class LayoutOptimizationFarmsScipy(LayoutOptimizationFarmsBase, LayoutOptimizati
                 self.bnds_y = self.bnds_y + [(bnd_ymin, bnd_ymax) for _ in range(self.nturbs_list[idx])]
 
         self.bnds = self.bnds_x + self.bnds_y
-        # print(self.bnds)
+        print(self.bnds)
 
-    # def _optimize(self):
-    #     self.residual_plant = minimize(
-    #         self._obj_func,# checked
-    #         self.x0,#?checked
-    #         method=self.solver,
-    #         bounds=self.bnds,
-    #         constraints=self.cons,#?
-    #         options=self.optOptions,
-    #     )
+    def _optimize(self):
+        self.residual_plant = minimize(
+            self._obj_func,# checked
+            self.x0,#?checked
+            method=self.solver,
+            bounds=self.bnds,
+            constraints=self.cons,#?
+            options=self.optOptions,
+        )
 
-    #     return self.residual_plant.x
+        return self.residual_plant.x
 
     # wf changed
     def _obj_func(self, locs):
@@ -180,47 +180,46 @@ class LayoutOptimizationFarmsScipy(LayoutOptimizationFarmsBase, LayoutOptimizati
         # Update the turbine map in floris
         self.wf.reinitialize(layout_x=layout_x, layout_y=layout_y)
 
-    # def _generate_constraints(self):
-    #     tmp1 = {
-    #         "type": "ineq",
-    #         "fun": lambda x, *args: self._space_constraint(x),
-    #     }
-    # #     tmp2 = {
-    # #         "type": "ineq",
-    # #         "fun": lambda x: self._distance_from_boundaries(x),
-    # #     }
+    def _generate_constraints(self):
+        tmp1 = {
+            "type": "ineq",
+            "fun": lambda x, *args: self._space_constraint(x),
+        }
+        tmp2 = {
+            "type": "ineq",
+            "fun": lambda x: self._distance_from_boundaries(x),
+        }
 
-    #     self.cons = [tmp1]
+        self.cons = [tmp1]
 
-    # def _space_constraint(self, x_in, rho=500):
-    #     print("space constraint")
-    #     x = [
-    #         self._unnorm(valx, self.farms_xmin, self.farms_xmax)
-    #         for valx in x_in[0 : self.nturbs]
-    #     ]
-    #     y =  [
-    #         self._unnorm(valy, self.farms_ymin, self.farms_ymax)
-    #         for valy in x_in[self.nturbs : 2 * self.nturbs]
-    #     ]
+    def _space_constraint(self, x_in, rho=500):
+        x = [
+            self._unnorm(valx, self.farms_xmin, self.farms_xmax)
+            for valx in x_in[0 : self.nturbs]
+        ]
+        y =  [
+            self._unnorm(valy, self.farms_ymin, self.farms_ymax)
+            for valy in x_in[self.nturbs : 2 * self.nturbs]
+        ]
 
-    #     # Calculate distances between turbines
-    #     locs = np.vstack((x, y)).T
-    #     distances = cdist(locs, locs)
-    #     arange = np.arange(distances.shape[0])
-    #     distances[arange, arange] = 1e10
-    #     dist = np.min(distances, axis=0)
+        # Calculate distances between turbines
+        locs = np.vstack((x, y)).T
+        distances = cdist(locs, locs)
+        arange = np.arange(distances.shape[0])
+        distances[arange, arange] = 1e10
+        dist = np.min(distances, axis=0)
 
-    #     g = 1 - np.array(dist) / self.min_dist
+        g = 1 - np.array(dist) / self.min_dist
 
-    #     # Following code copied from OpenMDAO KSComp().
-    #     # Constraint is satisfied when KS_constraint <= 0
-    #     g_max = np.max(np.atleast_2d(g), axis=-1)[:, np.newaxis]
-    #     g_diff = g - g_max
-    #     exponents = np.exp(rho * g_diff)
-    #     summation = np.sum(exponents, axis=-1)[:, np.newaxis]
-    #     KS_constraint = g_max + 1.0 / rho * np.log(summation)
+        # Following code copied from OpenMDAO KSComp().
+        # Constraint is satisfied when KS_constraint <= 0
+        g_max = np.max(np.atleast_2d(g), axis=-1)[:, np.newaxis]
+        g_diff = g - g_max
+        exponents = np.exp(rho * g_diff)
+        summation = np.sum(exponents, axis=-1)[:, np.newaxis]
+        KS_constraint = g_max + 1.0 / rho * np.log(summation)
 
-    #     return -1*KS_constraint[0][0]
+        return -1*KS_constraint[0][0]
 
     # not used yet
     def _distance_from_boundaries(self, x_in):
@@ -233,75 +232,80 @@ class LayoutOptimizationFarmsScipy(LayoutOptimizationFarmsBase, LayoutOptimizati
             for valy in x_in[self.nturbs : 2 * self.nturbs]
         ]
         boundary_con = np.zeros(self.nturbs)
-        # for idx in range(self.nfarms):
-        #     for i in range(self.nturbs_list[idx]):
-        #         loc = Point(x[i], y[i])
-        #         boundary_con[i] = loc.distance(self._boundary_lines[idx])# in base
-        #         if self._boundary_polygons[idx].contains(loc) is True:
-        #             boundary_con[i] *= 1.0
-        #         else:
-        #             boundary_con[i] *= -1.0
 
-        for i in range(self.nturbs):
+        # only flexible
+        # for idx in range(self.nfarms):
+        idx = 1
+        for i in range(self.nturbs_list[idx]):
             loc = Point(x[i], y[i])
-            boundary_con[i] = loc.distance(self._boundary_line)# in base
-            if self._boundary_polygon.contains(loc) is True:
+            boundary_con[i] = loc.distance(self._boundary_lines[idx])# in base
+            if self._boundary_polygons[idx].contains(loc) is True:
                 boundary_con[i] *= 1.0
             else:
                 boundary_con[i] *= -1.0
 
+        
+
+        # for i in range(self.nturbs):
+        #     loc = Point(x[i], y[i])
+        #     boundary_con[i] = loc.distance(self._boundary_line)# in base
+        #     if self._boundary_polygon.contains(loc) is True:
+        #         boundary_con[i] *= 1.0
+        #     else:
+        #         boundary_con[i] *= -1.0
+
         return boundary_con
 
-    # def _get_initial_and_final_locs(self):
-    #     x_initial = [
-    #         self._unnorm(valx, self.farms_xmin, self.farms_xmax)
-    #         for valx in self.x0[0 : self.nturbs]
-    #     ]
-    #     y_initial = [
-    #         self._unnorm(valy, self.farms_ymin, self.farms_ymax)
-    #         for valy in self.x0[self.nturbs : 2 * self.nturbs]
-    #     ]
-    #     x_opt = [
-    #         self._unnorm(valx, self.farms_xmin, self.farms_xmax)
-    #         for valx in self.residual_plant.x[0 : self.nturbs]
-    #     ]
-    #     y_opt = [
-    #         self._unnorm(valy, self.farms_ymin, self.farms_ymax)
-    #         for valy in self.residual_plant.x[self.nturbs : 2 * self.nturbs]#?
-    #     ]
-    #     return x_initial, y_initial, x_opt, y_opt
+    def _get_initial_and_final_locs(self):
+        x_initial = [
+            self._unnorm(valx, self.farms_xmin, self.farms_xmax)
+            for valx in self.x0[0 : self.nturbs]
+        ]
+        y_initial = [
+            self._unnorm(valy, self.farms_ymin, self.farms_ymax)
+            for valy in self.x0[self.nturbs : 2 * self.nturbs]
+        ]
+        x_opt = [
+            self._unnorm(valx, self.farms_xmin, self.farms_xmax)
+            for valx in self.residual_plant.x[0 : self.nturbs]
+        ]
+        y_opt = [
+            self._unnorm(valy, self.farms_ymin, self.farms_ymax)
+            for valy in self.residual_plant.x[self.nturbs : 2 * self.nturbs]#?
+        ]
+        return x_initial, y_initial, x_opt, y_opt
 
 
     # Public methods
 
-    # def optimize(self):
-    #     """
-    #     This method finds the optimized layout of wind turbines for power
-    #     production given the provided frequencies of occurance of wind
-    #     conditions (wind speed, direction).
+    def optimize(self):
+        """
+        This method finds the optimized layout of wind turbines for power
+        production given the provided frequencies of occurance of wind
+        conditions (wind speed, direction).
 
-    #     Returns:
-    #         opt_locs (iterable): A list of the optimized locations of each
-    #         turbine (m).
-    #     """
-    #     print("=====================================================")
-    #     print("Optimizing turbine layout...")
-    #     print("Number of parameters to optimize = ", len(self.x0))
-    #     print("=====================================================")
+        Returns:
+            opt_locs (iterable): A list of the optimized locations of each
+            turbine (m).
+        """
+        print("=====================================================")
+        print("Optimizing turbine layout...")
+        print("Number of parameters to optimize = ", len(self.x0))
+        print("=====================================================")
 
-    #     opt_locs_norm = self._optimize()
+        opt_locs_norm = self._optimize()
 
-    #     print("Optimization complete.")
+        print("Optimization complete.")
 
-    #     opt_locs = [
-    #         [
-    #             self._unnorm(valx, self.farms_xmin, self.farms_xmax)
-    #             for valx in opt_locs_norm[0 : self.nturbs]
-    #         ],
-    #         [
-    #             self._unnorm(valy, self.farms_ymin, self.farms_ymax)
-    #             for valy in opt_locs_norm[self.nturbs : 2 * self.nturbs]
-    #         ],
-    #     ]
+        opt_locs = [
+            [
+                self._unnorm(valx, self.farms_xmin, self.farms_xmax)
+                for valx in opt_locs_norm[0 : self.nturbs]
+            ],
+            [
+                self._unnorm(valy, self.farms_ymin, self.farms_ymax)
+                for valy in opt_locs_norm[self.nturbs : 2 * self.nturbs]
+            ],
+        ]
 
-    #     return opt_locs
+        return opt_locs
