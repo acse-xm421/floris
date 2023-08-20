@@ -133,6 +133,12 @@ class LayoutOptimizationFarmsScipy(LayoutOptimizationFarmsBase, LayoutOptimizati
                 bnd_ymin = self.farm_ymin[idx]/self.farms_ymax
                 bnd_ymax = self.farm_ymax[idx]/self.farms_ymax
 
+                # print("bnd_xmin=", bnd_xmin)
+                # print("bnd_xmax=", bnd_xmax)
+                # print("bnd_ymin=", bnd_ymin)
+                # print("bnd_ymax=", bnd_ymax)
+
+
                 # set bnds for each turbine
                 self.bnds_x = self.bnds_x + [(bnd_xmin, bnd_xmax) for _ in range(self.nturbs_list[idx])]
                 self.bnds_y = self.bnds_y + [(bnd_ymin, bnd_ymax) for _ in range(self.nturbs_list[idx])]

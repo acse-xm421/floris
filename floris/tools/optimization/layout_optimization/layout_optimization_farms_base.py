@@ -285,7 +285,7 @@ class LayoutOptimizationFarmsBase(LayoutOptimization):
         ax.add_artist(legend2)
 
         plt.savefig(path)
-        # plt.show()
+        plt.show()
 
 
 

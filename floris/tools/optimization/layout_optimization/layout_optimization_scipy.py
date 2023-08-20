@@ -78,7 +78,7 @@ class LayoutOptimizationScipy(LayoutOptimization):
         if optOptions is not None:
             self.optOptions = optOptions
         else:
-            self.optOptions = {"maxiter": 100, "disp": True, "iprint": 2, "ftol": 1e-9, "eps":0.01}
+            self.optOptions = {"maxiter": 50, "disp": True, "iprint": 2, "ftol": 1e-9, "eps":0.01}
 
         self._generate_constraints()
 
