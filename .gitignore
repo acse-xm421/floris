@@ -31,7 +31,27 @@ _autosummary/
 examples/cp_ct_cq_lut.p
 examples/hist.hist
 examples/SLSQP.out
-examples/0*
 
 # Log files
 *.log
+
+# my ignore
+# examples
+examples/01_opening_floris_computing_power.py
+examples/02_visualizations.py
+examples/03_making_adjustments.py
+examples/07_calc_aep_from_rose.py
+examples/08_calc_aep_from_rose_use_class.py
+examples/09_compare_farm_power_with_neighbor.py
+examples/10_opt_yaw_single_ws.py
+examples/11_opt_yaw_multiple_ws.py
+examples/12_optimize_yaw.py
+examples/12_optimize_yaw_in_parallel.py
+examples/13_optimize_yaw_with_neighboring_farm.py
+examples/15_optimize_layout.py
+examples/16_heterogeneous_inflow.py
+examples/16b_heterogenaity_multiple_ws_wd.py
+examples/20_calculate_farm_power_with_uncertainty.py
+
+# inputs
+examples/inputs/jensen.yaml
