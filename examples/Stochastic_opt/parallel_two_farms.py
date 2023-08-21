@@ -307,6 +307,7 @@ def run_farm(exp_t, mean_wd, variance_wd, distance, length, angle=90, mean_ws=8.
 
 
 def calculate_farm_power(params):
+    print("i, mean_wd, variance_wd, distance, angle, length", params)
     i, mean_wd, variance_wd, distance, angle, length = params
 
     # Replace this with your actual run_farm function call
@@ -330,9 +331,9 @@ def main():
     size = comm.Get_size()
 
     # Define your parameter ranges
-    variance_wd_range = [30,]#np.linspace(0, 90, 2)
-    angle_range = [0,90, 180, 270,] #np.arange(0, 360, 45) # 8
-    distance_range = [2000,]# 2500, 3000] # np.arange(length, length*2, 200)
+    variance_wd_range = np.linspace(0, 90, 7)
+    angle_range = np.arange(0, 360, 45) # 8
+    distance_range = [2000, 2500, 3000] # np.arange(length, length*2, 200)
 
     # Distribute parameter combinations across processes
     num_combinations = len(variance_wd_range) * len(angle_range) * len(distance_range)
@@ -349,10 +350,10 @@ def main():
     i = start_idx
     for variance_wd in variance_wd_range:
         for distance in distance_range:
-            # for repeat in range(repeat_times):
+            for repeat in range(repeat_times):
             # i, mean_wd, variance_wd, distance, angle, length = params
-            local_params.append((i, 0, variance_wd, distance, angle_range[rank], length))
-            i += 1
+                local_params.append((i, 0, variance_wd, distance, angle_range[rank], length))
+                i += 1
     
     # Run the calculations in parallel
     local_results = []
@@ -378,7 +379,7 @@ def main():
         print(df)
 
         # Define the file path where you want to save the CSV file
-        csv_file_path = 'exp1.csv'
+        csv_file_path = 'exp1-angle.csv'
 
         # Write the DataFrame to a CSV file
         df.to_csv(csv_file_path, index=True)  # Set index=True to include row index in the CSV
