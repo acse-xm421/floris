@@ -32,7 +32,7 @@ of the optimization show that the turbines are pushed to the outer corners of th
 which makes sense in order to maximize the energy production by minimizing wake interactions.
 """
 # mpiexec -n 11 python examples/Stochastic_opt/parallel_two_farms_dist_wd.py
-figpath = "examples/test_pic/test_exp/distance_variance_wd/farms_"#angle_variance_wd/
+figpath = "examples/test_pic/test_exp/distance_variance_wd_2/farms_"#angle_variance_wd/
 csv_file_path = 'exp1-dist_wd.csv'
 length = 2000.0
 
