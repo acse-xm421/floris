@@ -5,15 +5,11 @@ comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
 
-# Generate data on each process
-data = rank + 1
+# Print rank and size
+print(f"Hello from rank {rank} out of {size} processes!")
 
-# Perform the reduction (sum) across all processes
-total_sum = comm.reduce(data, op=MPI.SUM, root=0)
-
-# Print results
-if rank == 0:
-    print("Total sum:", total_sum)
+# Synchronize processes
+comm.Barrier()
 
 # Finalize MPI
 MPI.Finalize()
