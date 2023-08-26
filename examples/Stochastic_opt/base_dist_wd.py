@@ -31,7 +31,9 @@ are constrained to a square boundary and a random wind resource is supplied. The
 of the optimization show that the turbines are pushed to the outer corners of the boundary,
 which makes sense in order to maximize the energy production by minimizing wake interactions.
 """
-figpath = "examples/test_pic/test_exp/test_mpi/farms_"#angle_variance_wd/
+# mpiexec -n 11 python examples/Stochastic_opt/parallel_two_farms_dist_wd.py
+figpath = "examples/test_pic/test_exp/base_dist_wd/farms_"#angle_variance_wd/
+csv_file_path = 'exp3-base_dist_wd.csv'
 length = 2000.0
 
 def load_fixed_farm(distance):
@@ -83,7 +85,7 @@ def load_flexible_farm(distance):
 
     # flexible farm
     layout_x_flexible = np.linspace(distance,distance+length,10) # 3*D, 6 * D, 6 * D,
-    layout_y_flexible = np.random.randint(distance, distance+length+1, size=10) # 4 * D, 0, 4 * D,
+    layout_y_flexible = np.repeat(distance+0.5*length, 10) #np.random.randint(distance, distance+length+1, size=10) # 4 * D, 0, 4 * D,
     # layout_x_flexible = np.linspace(0,2000,10) # 3*D, 6 * D, 6 * D,
     # layout_y_flexible = np.zeros(10) #[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # 4 * D, 0, 4 * D,
 
@@ -257,7 +259,8 @@ def run_farm(exp_t, mean_wd, variance_wd, distance, length, angle=90, mean_ws=8.
     # # Plot the starting wake situation
     # if exp_t == 1:
     #     plot_horizontal(wf_layout_opt.wf, show_wd, solver, "before_opt", exp_t, yaw_angles=yaw_angles)
-        
+    plot_horizontal(wf_layout_opt.wf, show_wd, "base", exp_t, yaw_angles=yaw_angles)
+    
     wf_layout_opt.wf.calculate_wake(yaw_angles=yaw_angles)
     flexible_base_aep = wf_layout_opt.wf.get_farm_AEP(freq=freq, turbine_weights=flexible_farm_weights) / 1e6
     fixed_base_aep = wf_layout_opt.wf.get_farm_AEP(freq=freq, turbine_weights=fixed_farm_weights) / 1e6
@@ -270,40 +273,40 @@ def run_farm(exp_t, mean_wd, variance_wd, distance, length, angle=90, mean_ws=8.
     print("fixed_base_aep", fixed_base_aep)
     print("both_base_aep", total_base_aep)
     
-    # Run the optimization
-    sol = wf_layout_opt.optimize()
+    # # Run the optimization
+    # sol = wf_layout_opt.optimize()
 
-    # Get the resulting improvement in AEP
-    wf_layout_opt.wf.reinitialize(layout_x=sol[0], layout_y=sol[1])
+    # # Get the resulting improvement in AEP
+    # wf_layout_opt.wf.reinitialize(layout_x=sol[0], layout_y=sol[1])
 
-    # Plot the ending wake situation
-    # fi, show_wd, save_name, exp_t, yaw_angles
-    plot_horizontal(wf_layout_opt.wf, show_wd, "after_opt", exp_t, yaw_angles=yaw_angles)
-    wf_layout_opt.wf.calculate_wake(yaw_angles=yaw_angles)
-    flexible_opt_aep = wf_layout_opt.wf.get_farm_AEP(freq=freq, turbine_weights=flexible_farm_weights) / 1e6
-    fixed_opt_aep = wf_layout_opt.wf.get_farm_AEP(freq=freq, turbine_weights=fixed_farm_weights) / 1e6
-    total_opt_aep = wf_layout_opt.wf.get_farm_AEP(freq=freq, turbine_weights=both_farms_weights) / 1e6
-    # turbine_powers = wf_layout_opt.wf.get_turbine_powers()
-    # farm_power = wf_layout_opt.wf.get_farm_power()
-    # print("turbine_powers: ", turbine_powers)
-    # print("farm_power: ", farm_power)
-    # print("base_aep: ", base_aep)
-    # print("opt_aep: ", opt_aep)
-    flexible_percent_gain = 100 * (flexible_opt_aep - flexible_base_aep) / flexible_base_aep
-    fixed_percent_gain = 100 * (fixed_opt_aep - fixed_base_aep) / fixed_base_aep
-    total_percent_gain = 100 * (total_opt_aep - total_base_aep) / total_base_aep
+    # # Plot the ending wake situation
+    # # fi, show_wd, save_name, exp_t, yaw_angles
+    # plot_horizontal(wf_layout_opt.wf, show_wd, "after_opt", exp_t, yaw_angles=yaw_angles)
+    # wf_layout_opt.wf.calculate_wake(yaw_angles=yaw_angles)
+    # flexible_opt_aep = wf_layout_opt.wf.get_farm_AEP(freq=freq, turbine_weights=flexible_farm_weights) / 1e6
+    # fixed_opt_aep = wf_layout_opt.wf.get_farm_AEP(freq=freq, turbine_weights=fixed_farm_weights) / 1e6
+    # total_opt_aep = wf_layout_opt.wf.get_farm_AEP(freq=freq, turbine_weights=both_farms_weights) / 1e6
+    # # turbine_powers = wf_layout_opt.wf.get_turbine_powers()
+    # # farm_power = wf_layout_opt.wf.get_farm_power()
+    # # print("turbine_powers: ", turbine_powers)
+    # # print("farm_power: ", farm_power)
+    # # print("base_aep: ", base_aep)
+    # # print("opt_aep: ", opt_aep)
+    # flexible_percent_gain = 100 * (flexible_opt_aep - flexible_base_aep) / flexible_base_aep
+    # fixed_percent_gain = 100 * (fixed_opt_aep - fixed_base_aep) / fixed_base_aep
+    # total_percent_gain = 100 * (total_opt_aep - total_base_aep) / total_base_aep
 
-    # Print and plot the results
-    print(f'Optimal layout: {sol}')
-    print(
-        f'Optimal layout improves AEP by {total_percent_gain:.1f}% '
-        f'from {total_base_aep:.1f} MWh to {total_opt_aep:.1f} MWh'
-    )
+    # # Print and plot the results
+    # print(f'Optimal layout: {sol}')
+    # print(
+    #     f'Optimal layout improves AEP by {total_percent_gain:.1f}% '
+    #     f'from {total_base_aep:.1f} MWh to {total_opt_aep:.1f} MWh'
+    # )
 
-    sto_path = figpath + solver + "_plot_stochastic_" + str(exp_t) + ".png"
-    wf_layout_opt.plot_layout_opt_results(sto_path)
+    # sto_path = figpath + solver + "_plot_stochastic_" + str(exp_t) + ".png"
+    # wf_layout_opt.plot_layout_opt_results(sto_path)
 
-    return flexible_base_aep, flexible_opt_aep, flexible_percent_gain, fixed_base_aep, fixed_opt_aep, fixed_percent_gain, total_base_aep, total_opt_aep, total_percent_gain, overlap_flag, sol
+    return flexible_base_aep, fixed_base_aep, total_base_aep, overlap_flag
 
 
 def calculate_farm_power(params):
@@ -314,15 +317,12 @@ def calculate_farm_power(params):
     farm_power = run_farm(i, mean_wd=mean_wd, variance_wd=variance_wd, \
                           distance=distance, angle=angle, length=length)
     
-    flexible_base_aep, flexible_opt_aep, flexible_percent_gain, \
-        fixed_base_aep, fixed_opt_aep, fixed_percent_gain, \
-        total_base_aep, total_opt_aep, total_percent_gain, \
-        overlap_flag, sol = farm_power
+    flexible_base_aep, fixed_base_aep, total_base_aep, overlap_flag = farm_power
     
     # Return the results as a tuple
-    return (i, distance, angle, mean_wd, variance_wd, flexible_base_aep, flexible_opt_aep, 
-            flexible_percent_gain, fixed_base_aep, fixed_opt_aep, fixed_percent_gain,
-            total_base_aep, total_opt_aep, total_percent_gain, overlap_flag, sol)#?[]
+    return (i, distance, angle, mean_wd, variance_wd, 
+            flexible_base_aep, fixed_base_aep,
+            total_base_aep, overlap_flag )#?[]
 
 
 def main():
@@ -332,28 +332,29 @@ def main():
 
     # Define your parameter ranges
     variance_wd_range = np.linspace(0, 90, 7)
-    angle_range = np.arange(0, 360, 45) # 8
-    distance_range = [2000, 2500, 3000] # np.arange(length, length*2, 200)
+    angle_range = [90,] # np.arange(0, 360, 45) # 8
+    distance_range = np.linspace(length, length*2, 11) #np.arange(length, length*2+100, 200) # [2000, 2500, 3000] # 
+    repeat_times = 1
 
     # Distribute parameter combinations across processes
-    num_combinations = len(variance_wd_range) * len(angle_range) * len(distance_range)
+    num_combinations = len(variance_wd_range) * len(angle_range) * len(distance_range) * repeat_times
     chunk_size = num_combinations // size
     if num_combinations % size != 0:
         raise ValueError("Number of combinations must be divisible by number of processes")
     # remainder = num_combinations % size
 
     start_idx = rank * chunk_size
-    # end_idx = (rank + 1) * chunk_size if rank < size - 1 else (rank + 1) * chunk_size + remainder
+    end_idx = (rank + 1) * chunk_size if rank < size - 1 else (rank + 1) * chunk_size
 
     local_params = []
-    repeat_times = 3
     i = start_idx
     for variance_wd in variance_wd_range:
-        for distance in distance_range:
-            for repeat in range(repeat_times):
-            # i, mean_wd, variance_wd, distance, angle, length = params
-                local_params.append((i, 0, variance_wd, distance, angle_range[rank], length))
-                i += 1
+        for angle in angle_range:
+            for distance in distance_range:
+                for repeat in range(repeat_times):
+                # i, mean_wd, variance_wd, distance, angle, length = params
+                    local_params.append((i, 0, variance_wd, distance, angle, length))
+                    i += 1
     
     # Run the calculations in parallel
     local_results = []
@@ -367,19 +368,16 @@ def main():
         # Assemble final results into a DataFrame
         import pandas as pd
         columns = ['i', 'distance', 'angle', 'mean of wind direction', 'variance of wind direction', 
-                   'flexible farm base power', 'flexible farm opt power', 'flexible_percent_gain', 
-                   'fixed farm base power', 'fixed farm opt power', 'fixed_percent_gain', 
-                   'total farm base power', 'total farm opt power', 'total_percent_gain', 
-                   'overlap_flag', 'optimal position']
+                   'flexible farm base power', 
+                   'fixed farm base power', 
+                   'total farm base power', 
+                   'overlap_flag', ]
         
         # Flatten the results list of lists
         results = [item for sublist in all_results for item in sublist]
         
         df = pd.DataFrame(results, columns=columns)
         print(df)
-
-        # Define the file path where you want to save the CSV file
-        csv_file_path = 'exp1-angle.csv'
 
         # Write the DataFrame to a CSV file
         df.to_csv(csv_file_path, index=True)  # Set index=True to include row index in the CSV

@@ -96,7 +96,7 @@ class LayoutOptimization(LoggerBase):
                 )
 
         plt.savefig(path)
-        plt.show()
+        # plt.show()
 
 
     ###########################################################################

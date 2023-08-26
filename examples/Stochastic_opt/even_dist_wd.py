@@ -32,11 +32,11 @@ of the optimization show that the turbines are pushed to the outer corners of th
 which makes sense in order to maximize the energy production by minimizing wake interactions.
 """
 # mpiexec -n 11 python examples/Stochastic_opt/parallel_two_farms_dist_wd.py
-figpath = "examples/test_pic/test_exp/compare/farms_"#angle_variance_wd/
-csv_file_path = 'exp5-compare.csv'
+figpath = "examples/test_pic/test_exp/even_dist_wd/farms_"#angle_variance_wd/
+csv_file_path = 'exp3-even_dist_wd.csv'
 length = 2000.0
 
-def load_fixed_farm(distance, variance_wd):
+def load_fixed_farm(distance):
     # Load the default example floris object
     fi_fixed = FlorisInterface("examples/inputs/gch.yaml") # New CumulativeCurl model
     # fi = FlorisInterface("examples/inputs/emgauss.yaml") # New CumulativeCurl model
@@ -47,9 +47,9 @@ def load_fixed_farm(distance, variance_wd):
     # length = 2000.0 # 4500.0
     
     # fixed farm
-    layout_x_fixed, layout_y_fixed = new_layout(distance, variance_wd)
-    # layout_x_fixed = np.linspace(distance,distance+length,10) # 3*D, 6 * D, 6 * D,
-    # layout_x_fixed = np.repeat(distance+0.5*length, 10) #[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # 4 * D, 0, 4 * D,
+    layout_x_fixed = np.linspace(distance,distance+length,10) # 3*D, 6 * D, 6 * D,
+    layout_y_fixed = np.repeat(distance+0.5*length, 10) #[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # 4 * D, 0, 4 * D,
+
 
     # layout_x_fixed = [0, 667, 1334, 2000, 667, 1334, 0, 667, 1334, 2000] # 3*D, 6 * D, 6 * D,
     # layout_y_fixed = [0.0, 0.0, 0.0, 0.0, 1000.0, 1000.0, 2000.0, 2000.0, 2000.0, 2000.0] # 4 * D, 0, 4 * D,
@@ -73,7 +73,7 @@ def load_fixed_farm(distance, variance_wd):
 
     return fi_fixed, turbine_weights_fixed, boundaries_fixed
 
-def load_flexible_farm(distance, variance_wd):
+def load_flexible_farm(distance):
     # Load the default example floris object
     fi_flexible = FlorisInterface("examples/inputs/gch.yaml") # GCH model matched to the default "legacy_gauss" of V2
     # fi_fixed = FlorisInterface("examples/inputs/gch.yaml") # New CumulativeCurl model
@@ -85,11 +85,14 @@ def load_flexible_farm(distance, variance_wd):
     # length = 2000.0
 
     # flexible farm
-    layout_x_flexible, layout_y_flexible = new_layout(distance, variance_wd)
     # layout_x_flexible = np.linspace(distance,distance+length,10) # 3*D, 6 * D, 6 * D,
-    # layout_y_flexible = np.random.randint(distance, distance+length+1, size=10) # 4 * D, 0, 4 * D,
+    # layout_y_flexible = np.repeat(distance+0.5*length, 10) #np.random.randint(distance, distance+length+1, size=10) # 4 * D, 0, 4 * D,
     # layout_x_flexible = np.linspace(0,2000,10) # 3*D, 6 * D, 6 * D,
     # layout_y_flexible = np.zeros(10) #[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # 4 * D, 0, 4 * D,
+    x = np.linspace(distance, distance+length, 4)
+    y = np.linspace(distance, distance+length, 3)
+    layout_x_flexible = [x[0], x[1], x[2], x[3], x[1], x[2], x[0], x[1], x[2], x[3]] # 3*D, 6 * D, 6 * D,
+    layout_y_flexible = [y[0], y[0], y[0], y[0], y[1], y[1], y[2], y[2], y[2], y[2]] # 4 * D, 0, 4 * D,
 
     # layout_x_flexible = [0, 667, 1334, 2000, 667, 1334, 0, 667, 1334, 2000] # 3*D, 6 * D, 6 * D,
     # layout_y_flexible = [0.0, 0.0, 0.0, 0.0, 1000.0, 1000.0, 2000.0, 2000.0, 2000.0, 2000.0] # 4 * D, 0, 4 * D,
@@ -126,47 +129,6 @@ def load_windrose():
     freq_windrose = freq / freq.sum()  # Normalize to sum to 1.0
 
     return ws_windrose, wd_windrose, freq_windrose
-
-def new_layout(distance, variance_wd):
-    if variance_wd == 0 or variance_wd == 15:
-        x = np.linspace(distance,distance+length,10) # 3*D, 6 * D, 6 * D,
-        y = np.repeat(distance+0.5*length, 10) #[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # 4 * D, 0, 4 * D,
-    elif variance_wd == 30:
-        x = np.append([distance], np.linspace(distance, distance + length, 8))
-        x = np.append(x, [distance + length])
-
-        y = np.append([distance,],np.repeat(distance+length, 8))
-        y = np.append(y, [distance])
-    elif variance_wd == 45:
-        x = np.append([distance], np.linspace(distance, distance + length, 7))
-        x = np.append(x, np.repeat((distance + length),2))
-
-        y = np.append([distance,],np.repeat(distance+length, 7))
-        y = np.append(y, [distance, distance+0.5*length])
-    elif variance_wd == 60:
-        x = np.append(np.repeat(distance,2), np.linspace(distance, distance + length, 6))
-        x = np.append(x, np.repeat((distance + length),2))
-
-        y = np.append([distance,distance + 0.5*length],np.repeat(distance+length, 6))
-        y = np.append(y, [distance,distance+0.5*length])
-    elif variance_wd == 75:
-        x = np.append(np.repeat(distance,2), np.linspace(distance, distance + length, 5))
-        x = np.append(x, np.repeat((distance + length),2))
-        x = np.append(x, [distance+0.5*length])
-
-        y = np.append([distance,distance + 0.5*length],np.repeat(distance+length, 5))
-        y = np.append(y, [distance,distance+0.5*length])
-        y = np.append(y, [distance])
-    elif variance_wd == 90:
-        x = np.append(np.repeat(distance,2), np.linspace(distance, distance + length, 4))
-        x = np.append(x, np.repeat((distance + length),3))
-        x = np.append(x, [distance+0.5*length])
-
-        y = np.append([distance,distance + 0.5*length],np.repeat(distance+length, 4))
-        y = np.append(y, [distance,distance+0.33*length, distance+0.67*length])
-        y = np.append(y, [distance])
-
-    return x,y
 
 def plot_horizontal(fi, show_wd, save_name, exp_t, yaw_angles):
     # Create the plots of un-optimized layout
@@ -214,9 +176,8 @@ def run_farm(exp_t, mean_wd, variance_wd, distance, length, angle=90, mean_ws=8.
     
     # figname = str(exp_t) 
     solver = solver # "L-BFGS-B"#
-    # fixed_layout = 0
-    fi_fixed, _, _ = load_fixed_farm(distance, variance_wd)
-    fi_flexible, _, _ = load_flexible_farm(distance, variance_wd)
+    fi_fixed, _, _ = load_fixed_farm(distance)
+    fi_flexible, _, _ = load_flexible_farm(distance)
 
     # # Load a dataframe containing the wind rose information
     # ws_windrose, wd_windrose, freq_windrose = load_windrose()
@@ -303,7 +264,8 @@ def run_farm(exp_t, mean_wd, variance_wd, distance, length, angle=90, mean_ws=8.
     # # Plot the starting wake situation
     # if exp_t == 1:
     #     plot_horizontal(wf_layout_opt.wf, show_wd, solver, "before_opt", exp_t, yaw_angles=yaw_angles)
-        
+    plot_horizontal(wf_layout_opt.wf, show_wd, "base", exp_t, yaw_angles=yaw_angles)
+    
     wf_layout_opt.wf.calculate_wake(yaw_angles=yaw_angles)
     flexible_base_aep = wf_layout_opt.wf.get_farm_AEP(freq=freq, turbine_weights=flexible_farm_weights) / 1e6
     fixed_base_aep = wf_layout_opt.wf.get_farm_AEP(freq=freq, turbine_weights=fixed_farm_weights) / 1e6
@@ -316,40 +278,40 @@ def run_farm(exp_t, mean_wd, variance_wd, distance, length, angle=90, mean_ws=8.
     print("fixed_base_aep", fixed_base_aep)
     print("both_base_aep", total_base_aep)
     
-    # Run the optimization
-    sol = wf_layout_opt.optimize()
+    # # Run the optimization
+    # sol = wf_layout_opt.optimize()
 
-    # Get the resulting improvement in AEP
-    wf_layout_opt.wf.reinitialize(layout_x=sol[0], layout_y=sol[1])
+    # # Get the resulting improvement in AEP
+    # wf_layout_opt.wf.reinitialize(layout_x=sol[0], layout_y=sol[1])
 
-    # Plot the ending wake situation
-    # fi, show_wd, save_name, exp_t, yaw_angles
-    plot_horizontal(wf_layout_opt.wf, show_wd, "after_opt", exp_t, yaw_angles=yaw_angles)
-    wf_layout_opt.wf.calculate_wake(yaw_angles=yaw_angles)
-    flexible_opt_aep = wf_layout_opt.wf.get_farm_AEP(freq=freq, turbine_weights=flexible_farm_weights) / 1e6
-    fixed_opt_aep = wf_layout_opt.wf.get_farm_AEP(freq=freq, turbine_weights=fixed_farm_weights) / 1e6
-    total_opt_aep = wf_layout_opt.wf.get_farm_AEP(freq=freq, turbine_weights=both_farms_weights) / 1e6
-    # turbine_powers = wf_layout_opt.wf.get_turbine_powers()
-    # farm_power = wf_layout_opt.wf.get_farm_power()
-    # print("turbine_powers: ", turbine_powers)
-    # print("farm_power: ", farm_power)
-    # print("base_aep: ", base_aep)
-    # print("opt_aep: ", opt_aep)
-    flexible_percent_gain = 100 * (flexible_opt_aep - flexible_base_aep) / flexible_base_aep
-    fixed_percent_gain = 100 * (fixed_opt_aep - fixed_base_aep) / fixed_base_aep
-    total_percent_gain = 100 * (total_opt_aep - total_base_aep) / total_base_aep
+    # # Plot the ending wake situation
+    # # fi, show_wd, save_name, exp_t, yaw_angles
+    # plot_horizontal(wf_layout_opt.wf, show_wd, "after_opt", exp_t, yaw_angles=yaw_angles)
+    # wf_layout_opt.wf.calculate_wake(yaw_angles=yaw_angles)
+    # flexible_opt_aep = wf_layout_opt.wf.get_farm_AEP(freq=freq, turbine_weights=flexible_farm_weights) / 1e6
+    # fixed_opt_aep = wf_layout_opt.wf.get_farm_AEP(freq=freq, turbine_weights=fixed_farm_weights) / 1e6
+    # total_opt_aep = wf_layout_opt.wf.get_farm_AEP(freq=freq, turbine_weights=both_farms_weights) / 1e6
+    # # turbine_powers = wf_layout_opt.wf.get_turbine_powers()
+    # # farm_power = wf_layout_opt.wf.get_farm_power()
+    # # print("turbine_powers: ", turbine_powers)
+    # # print("farm_power: ", farm_power)
+    # # print("base_aep: ", base_aep)
+    # # print("opt_aep: ", opt_aep)
+    # flexible_percent_gain = 100 * (flexible_opt_aep - flexible_base_aep) / flexible_base_aep
+    # fixed_percent_gain = 100 * (fixed_opt_aep - fixed_base_aep) / fixed_base_aep
+    # total_percent_gain = 100 * (total_opt_aep - total_base_aep) / total_base_aep
 
-    # Print and plot the results
-    print(f'Optimal layout: {sol}')
-    print(
-        f'Optimal layout improves AEP by {total_percent_gain:.1f}% '
-        f'from {total_base_aep:.1f} MWh to {total_opt_aep:.1f} MWh'
-    )
+    # # Print and plot the results
+    # print(f'Optimal layout: {sol}')
+    # print(
+    #     f'Optimal layout improves AEP by {total_percent_gain:.1f}% '
+    #     f'from {total_base_aep:.1f} MWh to {total_opt_aep:.1f} MWh'
+    # )
 
-    sto_path = figpath + solver + "_plot_stochastic_" + str(exp_t) + ".png"
-    wf_layout_opt.plot_layout_opt_results(sto_path)
+    # sto_path = figpath + solver + "_plot_stochastic_" + str(exp_t) + ".png"
+    # wf_layout_opt.plot_layout_opt_results(sto_path)
 
-    return flexible_base_aep, flexible_opt_aep, flexible_percent_gain, fixed_base_aep, fixed_opt_aep, fixed_percent_gain, total_base_aep, total_opt_aep, total_percent_gain, overlap_flag, sol
+    return flexible_base_aep, fixed_base_aep, total_base_aep, overlap_flag
 
 
 def calculate_farm_power(params):
@@ -360,15 +322,12 @@ def calculate_farm_power(params):
     farm_power = run_farm(i, mean_wd=mean_wd, variance_wd=variance_wd, \
                           distance=distance, angle=angle, length=length)
     
-    flexible_base_aep, flexible_opt_aep, flexible_percent_gain, \
-        fixed_base_aep, fixed_opt_aep, fixed_percent_gain, \
-        total_base_aep, total_opt_aep, total_percent_gain, \
-        overlap_flag, sol = farm_power
+    flexible_base_aep, fixed_base_aep, total_base_aep, overlap_flag = farm_power
     
     # Return the results as a tuple
-    return (i, distance, angle, mean_wd, variance_wd, flexible_base_aep, flexible_opt_aep, 
-            flexible_percent_gain, fixed_base_aep, fixed_opt_aep, fixed_percent_gain,
-            total_base_aep, total_opt_aep, total_percent_gain, overlap_flag, sol)#?[]
+    return (i, distance, angle, mean_wd, variance_wd, 
+            flexible_base_aep, fixed_base_aep,
+            total_base_aep, overlap_flag )#?[]
 
 
 def main():
@@ -379,9 +338,8 @@ def main():
     # Define your parameter ranges
     variance_wd_range = np.linspace(0, 90, 7)
     angle_range = [90,] # np.arange(0, 360, 45) # 8
-    distance_range = [1, 650, 1150, 2300, 10000]#[2600, 3000] #np.linspace(length, length*2, 11)#np.arange(length, length*2+100, 200) #  
-    distance_range = [x + length for x in distance_range]
-    repeat_times = 1#?
+    distance_range = np.linspace(length, length*2, 11) #np.arange(length, length*2+100, 200) # [2000, 2500, 3000] # 
+    repeat_times = 1
 
     # Distribute parameter combinations across processes
     num_combinations = len(variance_wd_range) * len(angle_range) * len(distance_range) * repeat_times
@@ -396,8 +354,8 @@ def main():
     local_params = []
     i = start_idx
     for variance_wd in variance_wd_range:
-        for distance in distance_range:
-            for angle in angle_range:
+        for angle in angle_range:
+            for distance in distance_range:
                 for repeat in range(repeat_times):
                 # i, mean_wd, variance_wd, distance, angle, length = params
                     local_params.append((i, 0, variance_wd, distance, angle, length))
@@ -410,15 +368,15 @@ def main():
     
     # Gather results from all processes
     all_results = comm.gather(local_results, root=0)
-    print(all_results)
+
     if rank == 0:
         # Assemble final results into a DataFrame
         import pandas as pd
         columns = ['i', 'distance', 'angle', 'mean of wind direction', 'variance of wind direction', 
-                   'flexible farm base power', 'flexible farm opt power', 'flexible_percent_gain', 
-                   'fixed farm base power', 'fixed farm opt power', 'fixed_percent_gain', 
-                   'total farm base power', 'total farm opt power', 'total_percent_gain', 
-                   'overlap_flag', 'optimal position']
+                   'flexible farm base power', 
+                   'fixed farm base power', 
+                   'total farm base power', 
+                   'overlap_flag', ]
         
         # Flatten the results list of lists
         results = [item for sublist in all_results for item in sublist]
@@ -433,4 +391,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
 
