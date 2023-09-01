@@ -15,7 +15,7 @@ from floris.tools.optimization.layout_optimization.layout_optimization_farms_sci
     LayoutOptimizationFarmsScipy
 )
 from floris.tools.visualization import (
-s    visualize_cut_plane,
+    visualize_cut_plane
 )
 
 
