@@ -1,15 +1,5 @@
-from mpi4py import MPI
+distance_range = [1, 650, 1150, 2300, 10000]
+updated_distance_range = [x + 2000 for x in distance_range]
+print(updated_distance_range)
 
-# Initialize MPI
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
-size = comm.Get_size()
-
-# Print rank and size
-print(f"Hello from rank {rank} out of {size} processes!")
-
-# Synchronize processes
-comm.Barrier()
-
-# Finalize MPI
-MPI.Finalize()
+# print(distance_range)
