@@ -41,33 +41,25 @@ class LayoutOptimizationFarmsScipy(LayoutOptimizationFarmsBase, LayoutOptimizati
         optOptions=None,
     ):
         """
-        _summary_
+        Initialize the LayoutOptimizationFarmsScipy class.
 
         Args:
-            fi (_type_): _description_
-            boundaries (iterable(float, float)): Pairs of x- and y-coordinates
-                that represent the boundary's vertices (m).
-            freq (np.array): An array of the frequencies of occurance
-                correponding to each pair of wind direction and wind speed
-                values. If None, equal weight is given to each pair of wind conditions
-                Defaults to None.
-            bnds (iterable, optional): Bounds for the optimization
-                variables (pairs of min/max values for each variable (m)). If
-                none are specified, they are set to 0 and 1. Defaults to None.
-            min_dist (float, optional): The minimum distance to be maintained
-                between turbines during the optimization (m). If not specified,
-                initializes to 2 rotor diameters. Defaults to None.
-            solver (str, optional): Sets the solver used by Scipy. Defaults to 'SLSQP'.
-            optOptions (dict, optional): Dicitonary for setting the
-                optimization options. Defaults to None.
+            nfarms (_type_): _description_
+            fi_list (list): List of farm instances (fi) for optimization.
+            nturbs_list (list): List of the number of turbines in each farm.
+            angle_list (list): List of angles for farm positioning.
+            dist_list (list): List of distances for farm positioning.
+            boundary_1 (iterable): Pairs of x- and y-coordinates representing the boundary's vertices (m).
+            min_dist (float, optional): Minimum distance to be maintained between turbines during optimization (m).
+            wind_directions (int, optional): Number of wind directions.
+            wind_speeds (int, optional): Number of wind speeds.
+            freq (np.array, optional): Array of frequencies of occurrence corresponding to wind conditions.
+            bnds (iterable, optional): Bounds for optimization variables.
+            solver (str, optional): Solver used by Scipy.
+            chosen_weights (str, optional): Weighting scheme for turbines.
+            optOptions (dict, optional): Dictionary for optimization options.
         """
-        # not sure
-        # for idx, fi in enumerate(fi_list):
-        #     def __init__(self, fi, boundaries, min_dist=None, freq=None)
-        #     farm1 = super().__init__(fi, boundary_1, min_dist=None, freq=None)
-
-        # sure
-        # Check if the lengths match
+        # Call the initialization methods of the base classes to set up the attributes and constraints.
         super().__init__(nfarms, fi_list, nturbs_list, angle_list, dist_list, \
                          boundary_1, chosen_weights, min_dist, wind_directions, \
                             wind_speeds, freq)

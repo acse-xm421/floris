@@ -40,32 +40,21 @@ class LayoutOptimizationFarmsBase(LayoutOptimization):
         # optOptions=None,
     ):
         """
-        _summary_
+        Initialize the LayoutOptimizationFarmsBase class.
 
         Args:
-            fi (_type_): _description_
-            boundaries (iterable(float, float)): Pairs of x- and y-coordinates
-                that represent the boundary's vertices (m).
-            freq (np.array): An array of the frequencies of occurance
-                correponding to each pair of wind direction and wind speed
-                values. If None, equal weight is given to each pair of wind conditions
-                Defaults to None.
-            bnds (iterable, optional): Bounds for the optimization
-                variables (pairs of min/max values for each variable (m)). If
-                none are specified, they are set to 0 and 1. Defaults to None.
-            min_dist (float, optional): The minimum distance to be maintained
-                between turbines during the optimization (m). If not specified,
-                initializes to 2 rotor diameters. Defaults to None.
-            solver (str, optional): Sets the solver used by Scipy. Defaults to 'SLSQP'.
-            optOptions (dict, optional): Dicitonary for setting the
-                optimization options. Defaults to None.
+            nfarms (int): Number of farms.
+            fi_list (list): List of farms.
+            nturbs_list (list): List of the number of turbines in each farm.
+            angle_list (list): List of angles for farm placement.
+            dist_list (list): List of distances for farm placement.
+            boundary_1 (list): List of vertices defining the boundary of both farms.
+            chosen_weights (str): Weighting scheme for turbines.
+            min_dist (float, optional): Minimum distance between turbines.
+            wind_directions (int, optional): Number of wind directions.
+            wind_speeds (int, optional): Number of wind speeds.
+            freq (np.array, optional): Array of frequencies for wind conditions.
         """
-        # not sure
-        # for idx, fi in enumerate(fi_list):
-        #     def __init__(self, fi, boundaries, min_dist=None, freq=None)
-        #     farm1 = super().__init__(fi, boundary_1, min_dist=None, freq=None)
-
-        # sure
         # Check if the lengths match
         if len(fi_list) != nfarms or \
             len(nturbs_list) != nfarms or \
@@ -122,7 +111,6 @@ class LayoutOptimizationFarmsBase(LayoutOptimization):
         self._boundary_polygon = Polygon(self.boundaries)
         self._boundary_line = LineString(self.boundaries)
 
-        # sure
         for idx, fi in enumerate(fi_list):
             if idx == 0:
                 self.wf = fi.copy()
@@ -224,12 +212,6 @@ class LayoutOptimizationFarmsBase(LayoutOptimization):
         
         return weights
     
-    # def plot_boundary(self, ax, boundary_names, boundary_styles):
-    #     # Plot the boundary
-    #     for i in range(len(self.boundary_list)):
-    #         x_coords, y_coords = zip(*self.boundary_list[i])
-    #         ax.plot(x_coords, y_coords, linestyle=boundary_styles[i], label=boundary_names[i], color='k')
-    #         ax.legend()
 
     def plot_layout_opt_results(self, path):
         x_initial, y_initial, x_opt, y_opt = self._get_initial_and_final_locs()
@@ -240,12 +222,8 @@ class LayoutOptimizationFarmsBase(LayoutOptimization):
         ax.plot(x_initial, y_initial, "ob")
         ax.plot(x_opt, y_opt, "or")
 
-        # plt.title('Layout Optimization Results', fontsize=fontsize)
         ax.set_xlabel("x (m)", fontsize=fontsize)
         ax.set_ylabel("y (m)", fontsize=fontsize)
-        # ax.set_title("Layout Optimization Results", fontsize=fontsize)
-        # ax.xlabel("x (m)", fontsize=fontsize)
-        # ax.ylabel("y (m)", fontsize=fontsize)
         ax.axis("equal")
         ax.grid()
         ax.tick_params(which="both", labelsize=fontsize)
