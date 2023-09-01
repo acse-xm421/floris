@@ -1,24 +1,20 @@
-import os
+# Xuefei Mi acse-xm421
 import sys
-import logging
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
-from scipy.stats import weibull_min
 from mpi4py import MPI
 
 
 import floris.tools.visualization as wakeviz
 from floris.tools import FlorisInterface
-from floris.tools import WindRose
 from scipy.interpolate import NearestNDInterpolator
 from floris.tools.optimization.layout_optimization.layout_optimization_farms_scipy import (
     LayoutOptimizationFarmsScipy
 )
 from floris.tools.visualization import (
-    calculate_horizontal_plane_with_turbines,
-    visualize_cut_plane,
+    visualize_cut_plane
 )
 
 

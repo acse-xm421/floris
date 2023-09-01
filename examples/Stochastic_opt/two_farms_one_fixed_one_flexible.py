@@ -1,21 +1,17 @@
-import os
+# Xuefei Mi acse-xm421
 import sys
-import logging
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
-from scipy.stats import weibull_min
 
 import floris.tools.visualization as wakeviz
 from floris.tools import FlorisInterface
-from floris.tools import WindRose
 from scipy.interpolate import NearestNDInterpolator
 from floris.tools.optimization.layout_optimization.layout_optimization_farms_scipy import (
     LayoutOptimizationFarmsScipy
 )
 from floris.tools.visualization import (
-    calculate_horizontal_plane_with_turbines,
     visualize_cut_plane,
 )
 
@@ -29,33 +25,21 @@ are constrained to a square boundary and a random wind resource is supplied. The
 of the optimization show that the turbines are pushed to the outer corners of the boundary,
 which makes sense in order to maximize the energy production by minimizing wake interactions.
 """
-figpath = "examples/test_pic/test_exp/farms_"#angle_variance_wd/
+figpath = "examples/test_pic/farms_"#angle_variance_wd/
+csv_file_path = 'exp_test1.csv'
 length = 2000.0
 
 def load_fixed_farm():
     # Load the default example floris object
     fi_fixed = FlorisInterface("examples/inputs/gch.yaml") # New CumulativeCurl model
-    # fi = FlorisInterface("examples/inputs/emgauss.yaml") # New CumulativeCurl model
 
     # Specify the full wind farm layout: nominal wind farms
     # Set turbine locations to 6 turbines in a rectangle
     D = 126.0 # rotor diameter for the NREL 5MW
-    # length = 2000.0 # 4500.0
     
     # fixed farm
     layout_x_fixed = np.linspace(distance,distance+length,10) # 3*D, 6 * D, 6 * D,
     layout_y_fixed = np.repeat(distance+0.5*length, 10) #[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # 4 * D, 0, 4 * D,
-
-    # layout_x_fixed = [0, 667, 1334, 2000, 667, 1334, 0, 667, 1334, 2000] # 3*D, 6 * D, 6 * D,
-    # layout_y_fixed = [0.0, 0.0, 0.0, 0.0, 1000.0, 1000.0, 2000.0, 2000.0, 2000.0, 2000.0] # 4 * D, 0, 4 * D,
-
-    # p_7 = np.linspace(0, length, 7)
-    # repeated_cut = np.tile(p_7, 6)  # Repeat the entire array 7 times
-    # p_8 = np.linspace(0, length, 8)
-    # layout_x_fixed = np.append(repeated_cut, p_8)
-
-    # repeated_cut = np.repeat(p_7, 7)  # Repeat each element 7 times
-    # layout_y_fixed = np.append(repeated_cut, p_7[-1])
     
     # Turbine weights: we want to only optimize for the first 10 turbines, can we? others fixed?
     turbine_weights_fixed = np.zeros(len(layout_x_fixed), dtype=int)
@@ -71,22 +55,14 @@ def load_fixed_farm():
 def load_flexible_farm():
     # Load the default example floris object
     fi_flexible = FlorisInterface("examples/inputs/gch.yaml") # GCH model matched to the default "legacy_gauss" of V2
-    # fi_fixed = FlorisInterface("examples/inputs/gch.yaml") # New CumulativeCurl model
-    # fi = FlorisInterface("examples/inputs/emgauss.yaml") # New CumulativeCurl model
 
     # Specify the full wind farm layout: nominal wind farms
     # Set turbine locations to 6 turbines in a rectangle
     D = 126.0 # rotor diameter for the NREL 5MW
-    # length = 2000.0
 
     # flexible farm
     layout_x_flexible = np.linspace(distance,distance+length,10) # 3*D, 6 * D, 6 * D,
     layout_y_flexible = np.random.randint(distance, distance+length+1, size=10) # 4 * D, 0, 4 * D,
-    # layout_x_flexible = np.linspace(0,2000,10) # 3*D, 6 * D, 6 * D,
-    # layout_y_flexible = np.zeros(10) #[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # 4 * D, 0, 4 * D,
-
-    # layout_x_flexible = [0, 667, 1334, 2000, 667, 1334, 0, 667, 1334, 2000] # 3*D, 6 * D, 6 * D,
-    # layout_y_flexible = [0.0, 0.0, 0.0, 0.0, 1000.0, 1000.0, 2000.0, 2000.0, 2000.0, 2000.0] # 4 * D, 0, 4 * D,
     
     # Turbine weights: we want to only optimize for the first 10 turbines, can we? others fixed?
     turbine_weights_flexible = np.zeros(len(layout_x_flexible), dtype=int)
@@ -165,45 +141,15 @@ class TerminalOutputToFile:
 
 def run_farm(exp_t, mean_wd, variance_wd, distance, length, angle=90, mean_ws=8.0, variance_ws=0.0, solver = "SLSQP"):
     
-    figname = str(exp_t) 
-    solver = solver # "L-BFGS-B"#
     fi_fixed, turbine_weights_fixed, boundaries_fixed = load_fixed_farm()
     fi_flexible, turbine_weights_flexible, boundaries_flexible = load_flexible_farm()
 
-    # # Load a dataframe containing the wind rose information
-    # ws_windrose, wd_windrose, freq_windrose = load_windrose()
-    # ws_windrose = ws_windrose + 0.001  # Deal with 0.0 m/s discrepancy
-
     wind_directions = np.arange(-180, 180, 5.0) #?
-    # mean_ws = mean_ws
-    # variance_ws = variance_ws
     wind_speeds = [8.0]
 
-    # wind speed - weibull distribution
-    # # Parameters of the Weibull distribution
-    # c = 2.0  # Shape parameter
-    # loc = 0  # Location parameter
-    # scale = 1  # Scale parameter
-
-    # # Create a Weibull distribution object
-    # weibull_dist = weibull_min(c, loc=loc, scale=scale)
-
-    # # Generate random numbers from the Weibull distribution
-    # random_numbers = weibull_dist.rvs(size=1000)
-
-    # # Calculate the probability density function (PDF) of the Weibull distribution
-    # x = np.linspace(0, 5, 100)
-    # pdf = weibull_dist.pdf(x)
-
-
-    mean_wd = mean_wd
-    variance_wd = variance_wd
     if variance_wd == 0:
         variance_wd = 1e-5
     freq = norm.pdf(wind_directions, mean_wd, variance_wd)
-
-
-    # print("mean_wd=", mean_wd, "variance_wd", variance_wd)
 
     # Set values smaller than a threshold to 0
     threshold = 1e-5
@@ -226,8 +172,6 @@ def run_farm(exp_t, mean_wd, variance_wd, distance, length, angle=90, mean_ws=8.
     show_wd = mean_wd
 
     nfarms = 2
-    distance = distance
-    angle = angle
 
     # fixed first
     fi_list = [fi_fixed, fi_flexible] # independent
@@ -280,12 +224,7 @@ def run_farm(exp_t, mean_wd, variance_wd, distance, length, angle=90, mean_ws=8.
     flexible_opt_aep = wf_layout_opt.wf.get_farm_AEP(freq=freq, turbine_weights=flexible_farm_weights) / 1e6
     fixed_opt_aep = wf_layout_opt.wf.get_farm_AEP(freq=freq, turbine_weights=fixed_farm_weights) / 1e6
     total_opt_aep = wf_layout_opt.wf.get_farm_AEP(freq=freq, turbine_weights=both_farms_weights) / 1e6
-    # turbine_powers = wf_layout_opt.wf.get_turbine_powers()
-    # farm_power = wf_layout_opt.wf.get_farm_power()
-    # print("turbine_powers: ", turbine_powers)
-    # print("farm_power: ", farm_power)
-    # print("base_aep: ", base_aep)
-    # print("opt_aep: ", opt_aep)
+
     flexible_percent_gain = 100 * (flexible_opt_aep - flexible_base_aep) / flexible_base_aep
     fixed_percent_gain = 100 * (fixed_opt_aep - fixed_base_aep) / fixed_base_aep
     total_percent_gain = 100 * (total_opt_aep - total_base_aep) / total_base_aep
@@ -357,11 +296,8 @@ if __name__ == "__main__":
                 i = i+1
                 print(df)
 
-    # Define the file path where you want to save the CSV file
-    csv_file_path = 'exp1.csv'
-
     # Write the DataFrame to a CSV file
-    df.to_csv(csv_file_path, index=True)  # Set index=True to include row index in the CSV
+    # df.to_csv(csv_file_path, index=True)  # Set index=True to include row index in the CSV
 
     print(f"DataFrame has been written to '{csv_file_path}'.")
 

@@ -1,6 +1,5 @@
-import os
+# Xuefei Mi acse-xm421
 import sys
-import logging
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -11,14 +10,12 @@ from mpi4py import MPI
 
 import floris.tools.visualization as wakeviz
 from floris.tools import FlorisInterface
-from floris.tools import WindRose
 from scipy.interpolate import NearestNDInterpolator
 from floris.tools.optimization.layout_optimization.layout_optimization_farms_scipy import (
     LayoutOptimizationFarmsScipy
 )
 from floris.tools.visualization import (
-    calculate_horizontal_plane_with_turbines,
-    visualize_cut_plane,
+    visualize_cut_plane
 )
 
 
@@ -43,23 +40,11 @@ def load_fixed_farm(distance):
     # Specify the full wind farm layout: nominal wind farms
     # Set turbine locations to 6 turbines in a rectangle
     D = 126.0 # rotor diameter for the NREL 5MW
-    # length = 2000.0 # 4500.0
     
     # fixed farm
-    layout_x_fixed = np.linspace(distance,distance+length,10) # 3*D, 6 * D, 6 * D,
-    layout_y_fixed = np.repeat(distance+0.5*length, 10) #[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # 4 * D, 0, 4 * D,
+    layout_x_fixed = np.linspace(distance,distance+length,10)
+    layout_y_fixed = np.repeat(distance+0.5*length, 10)
 
-    # layout_x_fixed = [0, 667, 1334, 2000, 667, 1334, 0, 667, 1334, 2000] # 3*D, 6 * D, 6 * D,
-    # layout_y_fixed = [0.0, 0.0, 0.0, 0.0, 1000.0, 1000.0, 2000.0, 2000.0, 2000.0, 2000.0] # 4 * D, 0, 4 * D,
-
-    # p_7 = np.linspace(0, length, 7)
-    # repeated_cut = np.tile(p_7, 6)  # Repeat the entire array 7 times
-    # p_8 = np.linspace(0, length, 8)
-    # layout_x_fixed = np.append(repeated_cut, p_8)
-
-    # repeated_cut = np.repeat(p_7, 7)  # Repeat each element 7 times
-    # layout_y_fixed = np.append(repeated_cut, p_7[-1])
-    
     # Turbine weights: we want to only optimize for the first 10 turbines, can we? others fixed?
     turbine_weights_fixed = np.zeros(len(layout_x_fixed), dtype=int)
     turbine_weights_fixed[:] = 0.0
@@ -74,24 +59,16 @@ def load_fixed_farm(distance):
 def load_flexible_farm(distance):
     # Load the default example floris object
     fi_flexible = FlorisInterface("examples/inputs/gch.yaml") # GCH model matched to the default "legacy_gauss" of V2
-    # fi_fixed = FlorisInterface("examples/inputs/gch.yaml") # New CumulativeCurl model
-    # fi = FlorisInterface("examples/inputs/emgauss.yaml") # New CumulativeCurl model
 
     # Specify the full wind farm layout: nominal wind farms
     # Set turbine locations to 6 turbines in a rectangle
     D = 126.0 # rotor diameter for the NREL 5MW
-    # length = 2000.0
 
     # flexible farm
     layout_x_flexible = np.linspace(distance,distance+length,10) # 3*D, 6 * D, 6 * D,
     layout_y_flexible = np.random.randint(distance, distance+length+1, size=10) # 4 * D, 0, 4 * D,
-    # layout_x_flexible = np.linspace(0,2000,10) # 3*D, 6 * D, 6 * D,
-    # layout_y_flexible = np.zeros(10) #[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # 4 * D, 0, 4 * D,
 
-    # layout_x_flexible = [0, 667, 1334, 2000, 667, 1334, 0, 667, 1334, 2000] # 3*D, 6 * D, 6 * D,
-    # layout_y_flexible = [0.0, 0.0, 0.0, 0.0, 1000.0, 1000.0, 2000.0, 2000.0, 2000.0, 2000.0] # 4 * D, 0, 4 * D,
-    
-    # Turbine weights: we want to only optimize for the first 10 turbines, can we? others fixed?
+   # Turbine weights: we want to only optimize for the first 10 turbines, can we? others fixed?
     turbine_weights_flexible = np.zeros(len(layout_x_flexible), dtype=int)
     turbine_weights_flexible[:] = 1.0
 
@@ -115,7 +92,6 @@ def load_windrose():
 
     # Use an interpolant to shape the 'freq_val' vector appropriately. You can
     # also use np.reshape(), but NearestNDInterpolator is more fool-proof.
-    # insteresting
     freq_interpolant = NearestNDInterpolator(
         df[["ws", "wd"]], df["freq_val"]
     )
@@ -133,8 +109,6 @@ def plot_horizontal(fi, show_wd, save_name, exp_t, yaw_angles):
         yaw_angles=yaw_angles,
         wd=[show_wd],
         ws=[8.0],
-        # x_bounds=[-5000, 1000.0],
-        # y_bounds=[-5000.0, 1000.0],
     )
     fig, ax_list = plt.subplots(1, 1, figsize=(10, 8))
     wakeviz.visualize_cut_plane(horizontal_plane, ax=ax_list, title="Horizontal")
@@ -172,10 +146,6 @@ def run_farm(exp_t, distance, shape_ws, scale_ws, length, mean_wd=0, variance_wd
     fi_fixed, _, _ = load_fixed_farm(distance)
     fi_flexible, _, _ = load_flexible_farm(distance)
 
-    # # Load a dataframe containing the wind rose information
-    # ws_windrose, wd_windrose, freq_windrose = load_windrose()
-    # ws_windrose = ws_windrose + 0.001  # Deal with 0.0 m/s discrepancy
-
     wind_directions = np.arange(-180, 180, 5.0) #?
     wind_speeds = np.linspace(0.01,30,10) #[8.0]
 
@@ -206,15 +176,12 @@ def run_farm(exp_t, distance, shape_ws, scale_ws, length, mean_wd=0, variance_wd
     fi_flexible.reinitialize(wind_speeds=wind_speeds, wind_directions=wind_directions)
 
     # The boundaries for the turbines, specified as vertices
-    # length = length
     boundaries = [(distance, distance), (distance, distance+length), (distance+length, distance+length), (distance+length, distance), (distance, distance)]
 
     yaw_angles = np.array([[np.zeros(nturbs)]])
     show_wd = mean_wd
 
     nfarms = 2
-    # distance = distance
-    # angle = angle
 
     # fixed first
     fi_list = [fi_fixed, fi_flexible] # independent
@@ -268,12 +235,7 @@ def run_farm(exp_t, distance, shape_ws, scale_ws, length, mean_wd=0, variance_wd
     flexible_opt_aep = wf_layout_opt.wf.get_farm_AEP(freq=freq, turbine_weights=flexible_farm_weights) / 1e6
     fixed_opt_aep = wf_layout_opt.wf.get_farm_AEP(freq=freq, turbine_weights=fixed_farm_weights) / 1e6
     total_opt_aep = wf_layout_opt.wf.get_farm_AEP(freq=freq, turbine_weights=both_farms_weights) / 1e6
-    # turbine_powers = wf_layout_opt.wf.get_turbine_powers()
-    # farm_power = wf_layout_opt.wf.get_farm_power()
-    # print("turbine_powers: ", turbine_powers)
-    # print("farm_power: ", farm_power)
-    # print("base_aep: ", base_aep)
-    # print("opt_aep: ", opt_aep)
+
     flexible_percent_gain = 100 * (flexible_opt_aep - flexible_base_aep) / flexible_base_aep
     fixed_percent_gain = 100 * (fixed_opt_aep - fixed_base_aep) / fixed_base_aep
     total_percent_gain = 100 * (total_opt_aep - total_base_aep) / total_base_aep
